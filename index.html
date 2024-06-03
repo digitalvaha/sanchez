@@ -56,9 +56,65 @@
         let miningInterval;
         const miningSpeed = 1;
         const miningDuration = 60; // seconds
+        const userId = tg.initDataUnsafe.user.id;
+
+        const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';
+        const REPO_OWNER = 'digitalvaha';
+        const REPO_NAME = 'sanchez';
+        const FILE_PATH = 'data.json';
+
+        const headers = {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+        };
+
+        const api_url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+        const get_file_sha = async () => {
+            const response = await fetch(api_url, { headers });
+            const data = await response.json();
+            return data.sha;
+        };
+
+        const load_data = async () => {
+            const response = await fetch(api_url, { headers });
+            const data = await response.json();
+            const content = atob(data.content);
+            return JSON.parse(content);
+        };
+
+        const save_data = async (data) => {
+            const sha = await get_file_sha();
+            const content = btoa(JSON.stringify(data));
+            const payload = {
+                message: 'Update data.json',
+                content: content,
+                sha: sha
+            };
+            const response = await fetch(api_url, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
+            return response.json();
+        };
 
         const updateDisplay = () => {
             document.querySelector('.center-text').innerText = miningCount.toFixed(7);
+        };
+
+        const fetchBalance = async () => {
+            const data = await load_data();
+            miningCount = data[userId] || 0.0000000;
+            updateDisplay();
+        };
+
+        const updateBalance = async (amount) => {
+            const data = await load_data();
+            data[userId] = (data[userId] || 0) + amount;
+            await save_data(data);
+            miningCount = data[userId];
+            updateDisplay();
         };
 
         document.getElementById('start-button').addEventListener('click', () => {
@@ -78,7 +134,8 @@
             }, miningDuration * 1000);
         });
 
-        document.getElementById('collect-button').addEventListener('click', () => {
+        document.getElementById('collect-button').addEventListener('click', async () => {
+            await updateBalance(miningCount);
             document.getElementById('start-button').disabled = false;
             document.getElementById('collect-button').disabled = true;
             document.getElementById('mining-status').innerText = '';
@@ -86,7 +143,9 @@
             updateDisplay();
         });
 
+        fetchBalance();
         updateDisplay();
     </script>
 </body>
 </html>
+
