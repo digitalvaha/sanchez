@@ -42,9 +42,10 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="center-text">0.0000000</div>
+    <div class="center-text">Balance: <span id="balance">0.0000000</span></div>
+    <div class="center-text">Mining: <span id="mining-amount">0.0000000</span></div>
     <div class="mining-container">
-        <button class="mining-button" id="start-button">Start</button>
+        <button class="mining-button" id="start-button">Start Mining</button>
         <button class="mining-button" id="collect-button" disabled>Collect</button>
         <div class="center-text" id="mining-status"></div>
     </div>
@@ -52,7 +53,8 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        let miningCount = 0.0000000;
+        let miningAmount = 0.0000000;
+        let balance = 0.0000000;
         let miningInterval;
         const miningSpeed = 1;
         const miningDuration = 60; // seconds
@@ -100,12 +102,13 @@
         };
 
         const updateDisplay = () => {
-            document.querySelector('.center-text').innerText = miningCount.toFixed(7);
+            document.getElementById('balance').innerText = balance.toFixed(7);
+            document.getElementById('mining-amount').innerText = miningAmount.toFixed(7);
         };
 
         const fetchBalance = async () => {
             const data = await load_data();
-            miningCount = data[userId] || 0.0000000;
+            balance = data[userId] || 0.0000000;
             updateDisplay();
         };
 
@@ -113,7 +116,7 @@
             const data = await load_data();
             data[userId] = (data[userId] || 0) + amount;
             await save_data(data);
-            miningCount = data[userId];
+            balance = data[userId];
             updateDisplay();
         };
 
@@ -122,8 +125,9 @@
             document.getElementById('collect-button').disabled = true;
             document.getElementById('mining-status').innerText = 'Mining...';
 
+            miningAmount = 0.0000000;
             miningInterval = setInterval(() => {
-                miningCount += miningSpeed / 1000000;
+                miningAmount += miningSpeed / 1000000;
                 updateDisplay();
             }, 1000);
 
@@ -135,17 +139,15 @@
         });
 
         document.getElementById('collect-button').addEventListener('click', async () => {
-            await updateBalance(miningCount);
+            await updateBalance(miningAmount);
+            miningAmount = 0.0000000;
             document.getElementById('start-button').disabled = false;
             document.getElementById('collect-button').disabled = true;
             document.getElementById('mining-status').innerText = '';
-            miningCount = 0.0000000;
             updateDisplay();
         });
 
         fetchBalance();
-        updateDisplay();
     </script>
 </body>
 </html>
-
