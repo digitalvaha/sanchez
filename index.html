@@ -7,6 +7,7 @@
     <style>
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -17,19 +18,75 @@
         .center-text {
             font-size: 24px;
             color: #333;
+            margin-bottom: 20px;
+        }
+        .mining-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .mining-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .mining-button:disabled {
+            background-color: #9E9E9E;
+            cursor: not-allowed;
         }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="center-text">Merhaba</div>
+    <div class="center-text">0.0000000</div>
+    <div class="mining-container">
+        <button class="mining-button" id="start-button">Start</button>
+        <button class="mining-button" id="collect-button" disabled>Collect</button>
+        <div class="center-text" id="mining-status"></div>
+    </div>
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        // Kullanıcı bilgilerini al ve kullan
-        const user = tg.initDataUnsafe.user;
-        document.querySelector('.center-text').innerText = `Merhaba, ${user.first_name}!`;
+        let miningCount = 0.0000000;
+        let miningInterval;
+        const miningSpeed = 1;
+        const miningDuration = 60; // seconds
+
+        const updateDisplay = () => {
+            document.querySelector('.center-text').innerText = miningCount.toFixed(7);
+        };
+
+        document.getElementById('start-button').addEventListener('click', () => {
+            document.getElementById('start-button').disabled = true;
+            document.getElementById('collect-button').disabled = true;
+            document.getElementById('mining-status').innerText = 'Mining...';
+
+            miningInterval = setInterval(() => {
+                miningCount += miningSpeed / 1000000;
+                updateDisplay();
+            }, 1000);
+
+            setTimeout(() => {
+                clearInterval(miningInterval);
+                document.getElementById('mining-status').innerText = 'Mining finished. Collect your coins!';
+                document.getElementById('collect-button').disabled = false;
+            }, miningDuration * 1000);
+        });
+
+        document.getElementById('collect-button').addEventListener('click', () => {
+            document.getElementById('start-button').disabled = false;
+            document.getElementById('collect-button').disabled = true;
+            document.getElementById('mining-status').innerText = '';
+            miningCount = 0.0000000;
+            updateDisplay();
+        });
+
+        updateDisplay();
     </script>
 </body>
 </html>
