@@ -26,6 +26,10 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
+
+        // Kullanıcı bilgilerini al ve kullan
+        const user = tg.initDataUnsafe.user;
+        document.querySelector('.center-text').innerText = `Merhaba, ${user.first_name}!`;
     </script>
 </body>
 </html>
