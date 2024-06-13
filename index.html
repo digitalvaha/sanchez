@@ -3,151 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Bot Arayüzü</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-        .center-text {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .mining-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .mining-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .mining-button:disabled {
-            background-color: #9E9E9E;
-            cursor: not-allowed;
-        }
-    </style>
+    <title>Sanchez Web App</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="center-text">Balance: <span id="balance">0.0000000</span></div>
-    <div class="center-text">Mining: <span id="mining-amount">0.0000000</span></div>
-    <div class="mining-container">
-        <button class="mining-button" id="start-button">Start Mining</button>
-        <button class="mining-button" id="collect-button" disabled>Collect</button>
-        <div class="center-text" id="mining-status"></div>
+    <div id="content">
+        <h1 id="username">Loading...</h1>
     </div>
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-
-        let miningAmount = 0.0000000;
-        let balance = 0.0000000;
-        let miningInterval;
-        const miningSpeed = 1;
-        const miningDuration = 60; // seconds
-        const userId = tg.initDataUnsafe.user.id;
-
-        const GITHUB_TOKEN = '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';
-        const REPO_OWNER = 'digitalvaha';
-        const REPO_NAME = 'sanchez';
-        const FILE_PATH = 'data.json';
-
-        const headers = {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
-        };
-
-        const api_url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-
-        const get_file_sha = async () => {
-            const response = await fetch(api_url, { headers });
-            const data = await response.json();
-            return data.sha;
-        };
-
-        const load_data = async () => {
-            const response = await fetch(api_url, { headers });
-            const data = await response.json();
-            const content = atob(data.content);
-            return JSON.parse(content);
-        };
-
-        const save_data = async (data) => {
-            const sha = await get_file_sha();
-            const content = btoa(JSON.stringify(data));
-            const payload = {
-                message: 'Update data.json',
-                content: content,
-                sha: sha
-            };
-            const response = await fetch(api_url, {
-                method: 'PUT',
-                headers: headers,
-                body: JSON.stringify(payload)
-            });
-            return response.json();
-        };
-
-        const updateDisplay = () => {
-            document.getElementById('balance').innerText = balance.toFixed(7);
-            document.getElementById('mining-amount').innerText = miningAmount.toFixed(7);
-        };
-
-        const fetchBalance = async () => {
-            const data = await load_data();
-            balance = data[userId] || 0.0000000;
-            updateDisplay();
-        };
-
-        const updateBalance = async (amount) => {
-            const data = await load_data();
-            data[userId] = (data[userId] || 0) + amount;
-            await save_data(data);
-            balance = data[userId];
-            updateDisplay();
-        };
-
-        document.getElementById('start-button').addEventListener('click', () => {
-            document.getElementById('start-button').disabled = true;
-            document.getElementById('collect-button').disabled = true;
-            document.getElementById('mining-status').innerText = 'Mining...';
-
-            miningAmount = 0.0000000;
-            miningInterval = setInterval(() => {
-                miningAmount += miningSpeed / 1000000;
-                updateDisplay();
-            }, 1000);
-
-            setTimeout(() => {
-                clearInterval(miningInterval);
-                document.getElementById('mining-status').innerText = 'Mining finished. Collect your coins!';
-                document.getElementById('collect-button').disabled = false;
-            }, miningDuration * 1000);
+        Telegram.WebApp.onEvent('auth', function(user) {
+            document.getElementById('username').textContent = `Welcome, ${user.first_name}!`;
         });
-
-        document.getElementById('collect-button').addEventListener('click', async () => {
-            await updateBalance(miningAmount);
-            miningAmount = 0.0000000;
-            document.getElementById('start-button').disabled = false;
-            document.getElementById('collect-button').disabled = true;
-            document.getElementById('mining-status').innerText = '';
-            updateDisplay();
-        });
-
-        fetchBalance();
+        
+        Telegram.WebApp.ready();
     </script>
 </body>
 </html>
